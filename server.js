@@ -76,11 +76,32 @@ const put = (req, res) => {
   });
 };
 
+
+const del = (req, res) => {
+  const urlParts = req.url.split('/');
+  const httpCode = urlParts[urlParts.length - 1];
+
+  const filePath = path.join(cache, `${httpCode}.jpg`);
+
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Image not found, cannot delete\n');
+      return;
+    }
+
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end(`Image ${httpCode}.jpg deleted successfully\n`);
+  });
+};
+
 const server = http.createServer((req, res) => {
   if (req.method === 'GET') {
     get(req, res);
   } else if (req.method === 'PUT') {
     put(req, res);
+  } else if (req.method === 'DELETE') {
+    del(req, res);
   } else {
     res.writeHead(405, { 'Content-Type': 'text/plain' });
     res.end('Method is not allowed\n');
@@ -90,4 +111,5 @@ const server = http.createServer((req, res) => {
 server.listen(port, host, () => {
   console.log(`Сервер запущено http://${host}:${port}`);
 });
+
 
