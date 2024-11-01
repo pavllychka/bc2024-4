@@ -40,30 +40,54 @@ const get = (req, res) => {
   
   const filePath = path.join(cache, `${httpCode}.jpg`);  
 
-  
   fs.access(filePath, fs.constants.F_OK, (err) => {
     if (err) {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('Image is not found  \n');
+      res.end('Image is not found\n');
       return;
     }
 
-   
     res.writeHead(200, { 'Content-Type': 'image/jpeg' });
     const readStream = fs.createReadStream(filePath);
     readStream.pipe(res);
   });
 };
 
+
+const put = (req, res) => {
+  const urlParts = req.url.split('/');
+  const httpCode = urlParts[urlParts.length - 1];
+  
+  const filePath = path.join(cache, `${httpCode}.jpg`);
+
+  const writeStream = fs.createWriteStream(filePath);
+  
+  req.pipe(writeStream);
+
+  req.on('end', () => {
+    res.writeHead(201, { 'Content-Type': 'text/plain' });
+    res.end(`Image saved as ${httpCode}.jpg\n`);
+  });
+
+  req.on('error', (err) => {
+    console.error(err);
+    res.writeHead(500, { 'Content-Type': 'text/plain' });
+    res.end('Error saving the image\n');
+  });
+};
+
 const server = http.createServer((req, res) => {
   if (req.method === 'GET') {
-    get(req, res);  
+    get(req, res);
+  } else if (req.method === 'PUT') {
+    put(req, res);
   } else {
     res.writeHead(405, { 'Content-Type': 'text/plain' });
-    res.end('Method is not allowed \n');
+    res.end('Method is not allowed\n');
   }
 });
 
 server.listen(port, host, () => {
   console.log(`Сервер запущено http://${host}:${port}`);
 });
+
